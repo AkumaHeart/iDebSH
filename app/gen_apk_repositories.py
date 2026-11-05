@@ -1,23 +1,20 @@
-import os
+#!/usr/bin/env python3
+import sys
 
-def trim(x, start, end):
-    assert x.startswith(start)
-    assert x.endswith(end)
-    return x[len(start):-len(end)]
+# Define standard Debian mirrors for i386
+DEBIAN_MIRROR = "http://deb.debian.org/debian"
+SUITE = "bookworm" 
 
-APK_REPOSITORIES = [
-    ('v3.19', 'main'),
-    ('v3.19', 'community'),
-]
-ARCH = 'x86' # TODO: support more archs
+def generate_sources_list():
+    lines = [
+        f"deb {DEBIAN_MIRROR} {SUITE} main contrib non-free non-free-firmware\n",
+        f"deb {DEBIAN_MIRROR} {SUITE}-updates main contrib non-free non-free-firmware\n",
+        f"deb http://security.debian.org/debian-security {SUITE}-security main contrib non-free non-free-firmware\n"
+    ]
+    return "".join(lines)
 
-repos_file = []
-for version, repo in APK_REPOSITORIES:
-    with open(f'{os.environ["SRCROOT"]}/deps/aports/{version}/{repo}/{ARCH}/index.txt') as f:
-        index_name = f.read()
-    index_name = trim(index_name, 'APKINDEX-', '.tar.gz\n')
-    repos_file.append(f'http://apk.ish.app/{index_name}/{repo}')
-
-with open(os.path.join(os.environ['BUILT_PRODUCTS_DIR'], os.environ['CONTENTS_FOLDER_PATH'], 'repositories.txt'), 'w') as f:
-    for line in repos_file:
-        print(line, file=f)
+if __name__ == "__main__":
+    out_path = sys.argv[1] if len(sys.argv) > 1 else "sources.list"
+    with open(out_path, "w") as f:
+        f.write(generate_sources_list())
+    #print(f"Generated sources.list at {out_path}")
