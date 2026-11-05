@@ -105,7 +105,7 @@
     if (cell == self.sendFeedback) {
         [UIApplication openURL:@"mailto:tblodt@icloud.com?subject=Feedback%20for%20iSH"];
     } else if (cell == self.openGithub) {
-        [UIApplication openURL:@"https://github.com/ish-app/ish"];
+        [UIApplication openURL:@"https://github.com/AkumaHeart/iDebSH"];
     } else if (cell == self.openFediverse) {
         [UIApplication openURL:@"https://publ.ish.app/ish"];
     } else if (cell == self.openDiscord) {
@@ -129,11 +129,11 @@
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     if (section == 1) { // filesystems / upgrade
         if (!FsIsManaged()) {
-            return @"The current filesystem is not managed by iSH.";
+            return @"The current filesystem is not managed by iDebSH.";
         } else if (!FsNeedsRepositoryUpdate()) {
-            return [NSString stringWithFormat:@"The current filesystem is using %s, which is the latest version.", CURRENT_APK_VERSION_STRING];
+            return [NSString stringWithFormat:@"The current filesystem is using %s, which is the latest version.", CURRENT_DEBIAN_VERSION_STRING];
         } else {
-            return [NSString stringWithFormat:@"An upgrade to %s is available.", CURRENT_APK_VERSION_STRING];
+            return [NSString stringWithFormat:@"An upgrade to %s is available.", CURRENT_DEBIAN_VERSION_STRING];
         }
     }
     return [super tableView:tableView titleForFooterInSection:section];

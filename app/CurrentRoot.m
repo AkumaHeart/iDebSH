@@ -1,6 +1,6 @@
 //
 //  CurrentRoot.m
-//  iSH
+//  iDebSH
 //
 //  Created by Theodore Dubois on 11/4/21.
 //
@@ -14,7 +14,7 @@
 #endif
 
 int fs_ish_version;
-int fs_ish_apk_version;
+int fs_ish_apt_version;
 
 #if !ISH_LINUX
 static ssize_t read_file(const char *path, char *buf, size_t size) {
@@ -59,15 +59,20 @@ void FsInitialize(void) {
 
         version = nil;
 
-        n = read_file("/ish/apk-version", buf, sizeof(buf));
+        n = read_file("/ish/debian-version", buf, sizeof(buf));
+        if (n < 0) {
+            // Fallback for transition from legacy /ish/apk-version
+            n = read_file("/ish/apk-version", buf, sizeof(buf));
+        }
+
         if (n >= 0) {
             NSString *version = [[NSString alloc] initWithBytesNoCopy:buf length:n encoding:NSUTF8StringEncoding freeWhenDone:NO];
             version = [version stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-            fs_ish_apk_version = version.intValue;
+            fs_ish_apt_version = version.intValue;
         }
 
-        // If no newer value for CURRENT_APK_VERSION, do silent update.
-        if (fs_ish_apk_version >= CURRENT_APK_VERSION)
+        // If no newer value for CURRENT_DEBIAN_VERSION, do silent update.
+        if (fs_ish_apt_version >= CURRENT_DEBIAN_VERSION)
             FsUpdateRepositories();
 
         if (currentVersion.intValue > fs_ish_version) {
@@ -82,25 +87,31 @@ bool FsIsManaged(void) {
 }
 
 bool FsNeedsRepositoryUpdate(void) {
-    return FsIsManaged() && fs_ish_apk_version < CURRENT_APK_VERSION;
+    return FsIsManaged() && fs_ish_apt_version < CURRENT_DEBIAN_VERSION;
 }
 
 void FsUpdateOnlyRepositoriesFile(void) {
-    NSURL *repositories = [NSBundle.mainBundle URLForResource:@"repositories" withExtension:@"txt"];
-    if (repositories != nil) {
-        NSMutableData *repositoriesData = [@"# This file contains pinned repositories managed by iSH. If the /ish directory\n"
-                                           @"# exists, iSH uses the metadata stored in it to keep this file up to date (by\n"
-                                           @"# overwriting the contents on boot.)\n" dataUsingEncoding:NSUTF8StringEncoding].mutableCopy;
-        [repositoriesData appendData:[NSData dataWithContentsOfURL:repositories]];
-        write_file("/etc/apk/repositories", repositoriesData.bytes, repositoriesData.length);
+    NSURL *sources = [NSBundle.mainBundle URLForResource:@"sources" withExtension:@"list"];
+    if (sources == nil) {
+        // Fallback for legacy bundle name
+        sources = [NSBundle.mainBundle URLForResource:@"repositories" withExtension:@"txt"];
+    }
+
+    if (sources != nil) {
+        NSMutableData *sourcesData = [@"# This file contains Debian APT sources managed by iDebSH.\n"
+                                      @"# If the /ish directory exists, iDebSH keeps this file up to date.\n"
+                                      dataUsingEncoding:NSUTF8StringEncoding].mutableCopy;
+        [sourcesData appendData:[NSData dataWithContentsOfURL:sources]];
+        write_file("/etc/apt/sources.list", sourcesData.bytes, sourcesData.length);
     }
 }
 
 void FsUpdateRepositories(void) {
     FsUpdateOnlyRepositoriesFile();
-    fs_ish_apk_version = CURRENT_APK_VERSION;
-    NSString *currentVersionFile = [NSString stringWithFormat:@"%d\n", fs_ish_apk_version];
-    write_file("/ish/apk-version", currentVersionFile.UTF8String, [currentVersionFile lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+    fs_ish_apt_version = CURRENT_DEBIAN_VERSION;
+    NSString *currentVersionFile = [NSString stringWithFormat:@"%d\n", fs_ish_apt_version];
+    write_file("/ish/debian-version", currentVersionFile.UTF8String, [currentVersionFile lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+    remove_directory("/ish/apt");
     remove_directory("/ish/apk");
     dispatch_async(dispatch_get_main_queue(), ^{
         [NSNotificationCenter.defaultCenter postNotificationName:FsUpdatedNotification object:nil];

@@ -1,6 +1,6 @@
 //
 //  CurrentRoot.h
-//  iSH
+//  iDebSH
 //
 //  Created by Theodore Dubois on 11/4/21.
 //
@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern int fs_ish_version;
-extern int fs_ish_apk_version;
+extern int fs_ish_apt_version;
 
 void FsInitialize(void);
 bool FsIsManaged(void);
@@ -18,13 +18,16 @@ bool FsNeedsRepositoryUpdate(void);
 void FsUpdateOnlyRepositoriesFile(void);
 void FsUpdateRepositories(void);
 
-/// An integer representing the current major version of the apk repositories. An upgrade will be run if the number in /ish/apk-version is smaller. After a successful upgrade, the newer number is copied into /ish/apk-version.
-/// To upgrade:
-/// - update the default rootfs to the same version
-/// - update gen_apk_repositories.py to generate the new version of /etc/apk/repositories
-/// - set both of the following constants appropriately, making sure to use a larger number than the previous one
-#define CURRENT_APK_VERSION 31900
-#define CURRENT_APK_VERSION_STRING "Alpine v3.19"
+/// An integer representing the current major version of Debian APT repositories.
+/// An upgrade will be prompted if the number in /ish/debian-version is smaller.
+/// After a successful upgrade, the newer number is copied into /ish/debian-version.
+#define CURRENT_DEBIAN_VERSION 12000
+#define CURRENT_DEBIAN_VERSION_STRING "Debian 12 (Bookworm)"
+
+// Backward compatibility aliases
+#define fs_ish_apk_version fs_ish_apt_version
+#define CURRENT_APK_VERSION CURRENT_DEBIAN_VERSION
+#define CURRENT_APK_VERSION_STRING CURRENT_DEBIAN_VERSION_STRING
 
 extern NSString *const FsUpdatedNotification;
 

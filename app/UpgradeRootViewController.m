@@ -41,9 +41,9 @@
     self.upgradeButton.enabled = NO;
     if (FsNeedsRepositoryUpdate()) {
         self.upgradeButton.enabled = YES;
-        [self printToTerminal:@"# /sbin/apk upgrade"];
+        [self printToTerminal:@"# apt-get update && apt-get -y upgrade"];
     } else {
-        [self showAlertWithTitle:@"fuck" message:@"No update needed. If you're seeing this message, there's a bug."];
+        [self showAlertWithTitle:@"Notice" message:@"No update needed."];
     }
 }
 
@@ -100,7 +100,7 @@
     err = create_stdio(stdioFile.fileSystemRepresentation, TTY_PSEUDO_SLAVE_MAJOR, self.tty->num);
     if (err < 0)
         return err;
-    err = do_execve("/sbin/apk", 2, "/sbin/apk\0upgrade\0", "TERM=xterm-256color\0");
+    err = do_execve("/bin/sh", 3, "/bin/sh\0-c\0apt-get update && apt-get -y upgrade\0", "TERM=xterm-256color\0");
     if (err < 0)
         return err;
     self.upgradePid = current->pid;
